@@ -51,9 +51,12 @@ stop(_State) ->
 load_auth_hook(AuthQuery) ->
     SuperQuery = parse_query(application:get_env(?APP, super_query, undefined)),
     {ok, HashType} = application:get_env(?APP, password_hash),
+    {ok, AuthSuccessQuery} = application:get_env(?APP, auth_success_query),
     Params = #{auth_query  => AuthQuery,
                super_query => SuperQuery,
-               hash_type   => HashType},
+               hash_type   => HashType,
+               auth_success_query => AuthSuccessQuery
+               },
     emqx_auth_mysql:register_metrics(),
     emqx:hook('client.authenticate', fun emqx_auth_mysql:check/2, [Params]).
 

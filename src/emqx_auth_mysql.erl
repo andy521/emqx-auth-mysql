@@ -27,9 +27,11 @@
 register_metrics() ->
     [emqx_metrics:new(MetricName) || MetricName <- ['auth.mysql.success', 'auth.mysql.failure', 'auth.mysql.ignore']].
 
-check(Credentials = #{password := Password}, #{auth_query  := {AuthSql, AuthParams},
+check(Credentials = #{password := Password} = Conf1, #{auth_query  := {AuthSql, AuthParams},
                                                super_query := SuperQuery,
-                                               hash_type   := HashType}) ->
+                                               hash_type   := HashType,
+                                               auth_success_query := AuthSuccessQuery}
+                                               ) ->
     CheckPass = case emqx_auth_mysql_cli:query(AuthSql, AuthParams, Credentials) of
                     {ok, [<<"password">>], [[PassHash]]} ->
                         check_pass({PassHash, Password}, HashType);
@@ -43,6 +45,7 @@ check(Credentials = #{password := Password}, #{auth_query  := {AuthSql, AuthPara
                 end,
     case CheckPass of
         ok ->
+            auth_success_query(AuthSuccessQuery, []),
             emqx_metrics:inc('auth.mysql.success'),
             {stop, Credentials#{is_superuser => is_superuser(SuperQuery, Credentials),
                                 anonymous => false,
@@ -54,6 +57,18 @@ check(Credentials = #{password := Password}, #{auth_query  := {AuthSql, AuthPara
             emqx_metrics:inc('auth.mysql.failure'),
             {stop, Credentials#{auth_result => ResultCode, anonymous => false}}
     end.
+
+auth_success_query(QuerySql, Params) ->
+    Res = emqx_auth_mysql_cli:query(QuerySql, Params),
+    case Res of
+        {ok, _Columns, [Data]} ->
+            io:format("res -> ~p~n", [Data]),
+            ok;
+        {error, Reason} ->
+            ?LOG(error, "[MySQL] query '~p' failed: ~p", [QuerySql, Reason]),
+            error
+    end.
+    
 
 %%--------------------------------------------------------------------
 %% Is Superuser?

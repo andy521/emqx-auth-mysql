@@ -21,6 +21,7 @@
 
 -export([parse_query/1]).
 -export([connect/1]).
+-export([query/2]).
 -export([query/3]).
 
 %%--------------------------------------------------------------------
@@ -45,6 +46,8 @@ parse_query(Sql) ->
 connect(Options) ->
     mysql:start_link(Options).
 
+query(Sql, Params) ->
+    ecpool:with_client(?APP, fun(C) -> mysql:query(C, Sql, Params) end).
 query(Sql, Params, Credentials) ->
     ecpool:with_client(?APP, fun(C) -> mysql:query(C, Sql, replvar(Params, Credentials)) end).
 
