@@ -27,6 +27,8 @@
 register_metrics() ->
     [emqx_metrics:new(MetricName) || MetricName <- ['auth.mysql.success', 'auth.mysql.failure', 'auth.mysql.ignore']].
 
+check(Credentials = #{password := undefined, username := undefined}, _State) ->
+    {stop, Credentials#{auth_result => not_authorized, anonymous => false}};
 check(Credentials = #{password := Password} = Conf1, #{auth_query  := {AuthSql, AuthParams},
                                                super_query := SuperQuery,
                                                hash_type   := HashType,
