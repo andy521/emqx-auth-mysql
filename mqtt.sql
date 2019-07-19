@@ -30,6 +30,7 @@ DROP TABLE IF EXISTS `mqtt_user`;
 
 CREATE TABLE `mqtt_user` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `clientid` varchar(100) DEFAULT NULL COMMENT 'ClientId',
   `username` varchar(100) DEFAULT NULL,
   `password` varchar(100) DEFAULT NULL,
   `salt` varchar(35) DEFAULT NULL,

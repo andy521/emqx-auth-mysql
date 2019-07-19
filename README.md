@@ -103,11 +103,11 @@ auth.mysql.super_query = select is_superuser from mqtt_user where username = '%u
 auth.mysql.acl_query = select allow, ipaddr, username, clientid, access, topic from mqtt_acl where ipaddr = '%a' or username = '%u' or username = '$all' or clientid = '%c'
 
 # 认证成功执行的sql
-auth.mysql.auth_success_query = UPDATE mqtt_user SET status = 1 WHERE username = '%u'
+auth.mysql.auth_success_query = UPDATE mqtt_user SET status = 1 WHERE username = '%u' or clientid = '%c'
 
 
 # 连接断开执行的sql
-auth.mysql.connected_close_query = UPDATE mqtt_user SET status = 0 WHERE username = '%u'
+auth.mysql.connected_close_query = UPDATE mqtt_user SET status = 0 WHERE username = '%u' or clientid = '%c'
 
 ```
 
@@ -129,6 +129,7 @@ Notice: This is a demo table. You could authenticate with any user table.
 ```sql
 CREATE TABLE `mqtt_user` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `clientid` varchar(100) DEFAULT NULL COMMENT 'ClientId',
   `username` varchar(100) DEFAULT NULL,
   `password` varchar(100) DEFAULT NULL,
   `salt` varchar(35) DEFAULT NULL,
