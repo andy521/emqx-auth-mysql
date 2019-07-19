@@ -55,6 +55,7 @@
                              "`password` varchar(100) DEFAULT NULL,"
                              "`salt` varchar(100) DEFAULT NULL,"
                              "`is_superuser` tinyint(1) DEFAULT 0,"
+                             "`status` tinyint(1) DEFAULT 0,"
                              "`created` datetime DEFAULT NULL,"
                              "PRIMARY KEY (`id`),"
                              "UNIQUE KEY `mqtt_username` (`username`)"
@@ -87,8 +88,8 @@ init_per_suite(Config) ->
     Config.
 
 end_per_suite(_Config) ->
-    drop_table_(?DROP_AUTH_TABLE),
-    drop_table_(?DROP_ACL_TABLE),
+    % drop_table_(?DROP_AUTH_TABLE),
+    % drop_table_(?DROP_ACL_TABLE),
     emqx_ct_helpers:stop_apps([emqx_auth_mysql, emqx]).
 
 check_acl(_) ->

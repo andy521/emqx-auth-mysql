@@ -19,6 +19,7 @@
 
 -export([ register_metrics/0
         , check/2
+        , on_client_disconnected/3
         , description/0
         ]).
 
@@ -29,10 +30,10 @@ register_metrics() ->
 
 check(Credentials = #{password := undefined, username := undefined}, _State) ->
     {stop, Credentials#{auth_result => not_authorized, anonymous => false}};
-check(Credentials = #{password := Password} = Conf1, #{auth_query  := {AuthSql, AuthParams},
+check(Credentials = #{password := Password}, #{auth_query  := {AuthSql, AuthParams},
                                                super_query := SuperQuery,
                                                hash_type   := HashType,
-                                               auth_success_query := AuthSuccessQuery}
+                                               auth_success_query := {AuthSuccessQuery, _}}
                                                ) ->
     CheckPass = case emqx_auth_mysql_cli:query(AuthSql, AuthParams, Credentials) of
                     {ok, [<<"password">>], [[PassHash]]} ->
@@ -47,7 +48,7 @@ check(Credentials = #{password := Password} = Conf1, #{auth_query  := {AuthSql, 
                 end,
     case CheckPass of
         ok ->
-            auth_success_query(AuthSuccessQuery, []),
+            auth_success_query(AuthSuccessQuery, AuthParams, Credentials),
             emqx_metrics:inc('auth.mysql.success'),
             {stop, Credentials#{is_superuser => is_superuser(SuperQuery, Credentials),
                                 anonymous => false,
@@ -60,17 +61,13 @@ check(Credentials = #{password := Password} = Conf1, #{auth_query  := {AuthSql, 
             {stop, Credentials#{auth_result => ResultCode, anonymous => false}}
     end.
 
-auth_success_query(QuerySql, Params) ->
-    Res = emqx_auth_mysql_cli:query(QuerySql, Params),
-    case Res of
-        {ok, _Columns, [Data]} ->
-            io:format("res -> ~p~n", [Data]),
-            ok;
-        {error, Reason} ->
-            ?LOG(error, "[MySQL] query '~p' failed: ~p", [QuerySql, Reason]),
-            error
-    end.
+auth_success_query(QuerySql, Params, Credentials) ->
+    emqx_auth_mysql_cli:query(QuerySql, Params, Credentials).
     
+
+on_client_disconnected(Credentials, Msg, #{connected_close_query := {ConnectedCloseQuery, Params}}) ->
+    emqx_auth_mysql_cli:query(ConnectedCloseQuery, Params, Credentials),
+    {ok, Credentials, Msg}.
 
 %%--------------------------------------------------------------------
 %% Is Superuser?

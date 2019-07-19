@@ -51,14 +51,17 @@ stop(_State) ->
 load_auth_hook(AuthQuery) ->
     SuperQuery = parse_query(application:get_env(?APP, super_query, undefined)),
     {ok, HashType} = application:get_env(?APP, password_hash),
-    {ok, AuthSuccessQuery} = application:get_env(?APP, auth_success_query),
+    AuthSuccessQuery = parse_query(application:get_env(?APP, auth_success_query, undefined)),
+    ConnectedCloseQuery = parse_query(application:get_env(?APP, connected_close_query, undefined)),
     Params = #{auth_query  => AuthQuery,
                super_query => SuperQuery,
                hash_type   => HashType,
-               auth_success_query => AuthSuccessQuery
+               auth_success_query => AuthSuccessQuery,
+               connected_close_query => ConnectedCloseQuery
                },
     emqx_auth_mysql:register_metrics(),
-    emqx:hook('client.authenticate', fun emqx_auth_mysql:check/2, [Params]).
+    emqx:hook('client.authenticate', fun emqx_auth_mysql:check/2, [Params]),
+    emqx:hook('client.disconnected', fun emqx_auth_mysql:on_client_disconnected/3, [Params]).
 
 load_acl_hook(AclQuery) ->
     emqx_acl_mysql:register_metrics(),
