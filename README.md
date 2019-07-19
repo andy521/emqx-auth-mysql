@@ -1,4 +1,8 @@
 
+emqx_auth_mysql 的改进版本。
+
+认证成功， 表mqtt_user的当前用户status字段值变为1， 连接断开status字段值变为0 
+
 emqx_auth_mysql
 ===============
 
@@ -122,6 +126,7 @@ CREATE TABLE `mqtt_user` (
   `password` varchar(100) DEFAULT NULL,
   `salt` varchar(35) DEFAULT NULL,
   `is_superuser` tinyint(1) DEFAULT 0,
+  `status` tinyint(1) DEFAULT 0,
   `created` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `mqtt_username` (`username`)
