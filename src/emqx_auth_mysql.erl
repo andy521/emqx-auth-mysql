@@ -33,7 +33,7 @@ check(Credentials = #{password := undefined, username := undefined}, _State) ->
 check(Credentials = #{password := Password}, #{auth_query  := {AuthSql, AuthParams},
                                                super_query := SuperQuery,
                                                hash_type   := HashType,
-                                               auth_success_query := {AuthSuccessQuery, _}}
+                                               auth_success_query := {AuthSuccessQuery, SuccessParams}}
                                                ) ->
     CheckPass = case emqx_auth_mysql_cli:query(AuthSql, AuthParams, Credentials) of
                     {ok, [<<"password">>], [[PassHash]]} ->
@@ -48,7 +48,7 @@ check(Credentials = #{password := Password}, #{auth_query  := {AuthSql, AuthPara
                 end,
     case CheckPass of
         ok ->
-            auth_success_query(AuthSuccessQuery, AuthParams, Credentials),
+            auth_success_query(AuthSuccessQuery, SuccessParams, Credentials),
             emqx_metrics:inc('auth.mysql.success'),
             {stop, Credentials#{is_superuser => is_superuser(SuperQuery, Credentials),
                                 anonymous => false,
